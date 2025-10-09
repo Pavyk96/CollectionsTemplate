@@ -1,6 +1,9 @@
 package ru.naumen.collection.task4;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -10,38 +13,33 @@ import java.util.function.Supplier;
 public class ConcurrentCalculationManager<T> {
 
     /**
-     * Используем потокобезопасную мапу для хранения результатов по индексам.
-     * Индексы позволяют выдавать результаты строго в порядке добавления задач, соблюдаем FIFO
+     * Здесь используется LinkedBlockingQueue.
+     * Это потокобезопасная блокирующая очередь на основе связного списка.
+     * Она позволяет безопасно добавлять и извлекать элементы из разных потоков одновременно.
+     * При этом операции вставки и удаления выполняются за O(1), а блокировка потоков
+     * происходит только если очередь пуста при извлечении или полна при вставке.
+     * Это делает её удобной для параллельной обработки задач, потому что
+     * она сама управляет синхронизацией и упрощает реализацию FIFO.
      *
-     * Вставка в такую структуру выполняется за O(1) по индексу
-     * Сам алгоритм работает за O(n), где n - кол-во задач
+     * CompletableFuture используется для запуска задач асинхронно
+     * и получения их результата без ручного управления потоками.
      */
-    private final ConcurrentHashMap<Integer, T> resultsMap = new ConcurrentHashMap<>();
-    private final AtomicInteger currentIndex = new AtomicInteger(0);
-    private final AtomicInteger nextResultIndex = new AtomicInteger(0);
+    private final BlockingQueue<CompletableFuture<T>> results = new LinkedBlockingQueue<>();
 
     /**
      * Добавить задачу на параллельное вычисление
      */
     public void addTask(Supplier<T> task) {
-        int taskIndex = currentIndex.getAndIncrement();
-        T result = task.get();
-        resultsMap.put(taskIndex, result);
+        CompletableFuture<T> future = CompletableFuture.supplyAsync(task);
+        results.add(future);
     }
 
     /**
      * Получить результат вычисления.
      * Возвращает результаты в том порядке, в котором добавлялись задачи.
      */
-    public T getResult() {
-        int index = nextResultIndex.getAndIncrement();
-        while (true) {
-            T result = resultsMap.get(index);
-            if (result != null) {
-                resultsMap.remove(index);
-                return result;
-            }
-            Thread.yield();
-        }
+    public T getResult() throws InterruptedException {
+        CompletableFuture<T> future = results.take();
+        return future.join();
     }
 }
