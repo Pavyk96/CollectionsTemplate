@@ -38,7 +38,9 @@ public class Task2
     public static List<User> findDuplicates(Collection<User> collA, Collection<User> collB) {
         /**
          * Решил взять Set, так как он хранит в себе только уникальные значения.
-         * Поиск в Set занимает O(1), благодаря хеш функции
+         * Поиск в Set занимает O(1), благодаря хеш функции, которую
+         * я определил в классе User, чтобы хеш функция искзаала значение исходя
+         * из полей пользователяЫ
          */
         Set<User> setA = new HashSet<>(collA);
         List<User> duplicates = new ArrayList<>();
