@@ -1,10 +1,7 @@
 package ru.naumen.collection.task3;
 
 import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
 /**
  * <p>Написать консольное приложение, которое принимает на вход произвольный текстовый файл в формате txt.
@@ -23,50 +20,67 @@ public class WarAndPeace
             "Лев_Толстой_Война_и_мир_Том_1,_2,_3,_4_(UTF-8).txt");
 
     /**
-     * Алгоритм работает в среднем за O(n + u * log(u)), где n - длинна списка слов,
-     * u * log(u) - сортировка уникальных слов, важно заметить, что
-     * u << n, потому что уникальных слов во много раз меньше чем всех слов
+     * Алгоритм работает в среднем за O(n), где n - длинна списка слов,
+     * В методе мы много раз бегаем по результирующему списку, но его размер ограниченный
+     * поэтому он во много раз меньше чем n, следовательно его можно принять за константу.
+     * Из этого как раз и следует что алгоритм за O(n)
      */
     public static void main(String[] args) {
 
         /**
          * Использую СвязнуюХешМапу, чтобы по ней можно было быстро итерироваться, вставка в такую мапу O(1),
-         * благодаря хеш функции
+         * благодаря хеш функции, которая определена в String
          */
         Map<String, Integer> wordCount = new LinkedHashMap<>();
+
+        // Очередь для топ-10 — минимальный элемент
+        PriorityQueue<Map.Entry<String, Integer>> topTenWords =
+                new PriorityQueue<>(11, Comparator.comparingInt(Map.Entry::getValue));
+
+        // Очередь для последних 10 — максимальный элемент
+        PriorityQueue<Map.Entry<String, Integer>> lastTenWords =
+                new PriorityQueue<>(11, (a, b) -> Integer.compare(b.getValue(), a.getValue()));
 
         new WordParser(WAR_AND_PEACE_FILE_PATH)
                 .forEachWord(word -> {
                     wordCount.merge(word, 1, Integer::sum);
                 });
 
-        /**
-         * Использую СвязнуюХешМапу, потому что она сохраняет порядок вставки
-         */
-        LinkedHashMap<String, Integer> sortedByFrequency = wordCount.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (e1, e2) -> e1,
-                        LinkedHashMap::new
-                ));
+        for (Map.Entry<String, Integer> entry : wordCount.entrySet()) {
+            // обновляем топ-10
+            topTenWords.offer(entry);
+            if (topTenWords.size() > 10) {
+                topTenWords.poll();
+            }
 
-        /**
-         * Использую стримы для быстрой итерации по отсортированной хеш мапе
-         */
+            // обновляем ласт-10
+            lastTenWords.offer(entry);
+            if (lastTenWords.size() > 10) {
+                lastTenWords.poll();
+            }
+        }
+
+        // переносим из очередей в LinkedList в обратном порядке (чтобы вывести по убыванию/возрастанию)
+        LinkedList<Map.Entry<String, Integer>> topResult = new LinkedList<>();
+        while (!topTenWords.isEmpty()) {
+            topResult.addFirst(topTenWords.poll());
+        }
+
+        LinkedList<Map.Entry<String, Integer>> lastResult = new LinkedList<>();
+        while (!lastTenWords.isEmpty()) {
+            lastResult.addFirst(lastTenWords.poll());
+        }
+
         System.out.println("\nTOP 10 наиболее используемых слов:");
-        sortedByFrequency.entrySet().stream().limit(10)
-                .forEach(entry ->
-                        System.out.printf("%s - %d раз(а)%n", entry.getKey(), entry.getValue())
-                );
+        for (Map.Entry<String, Integer> e : topResult) {
+            System.out.printf("%s - %d раз(а)%n", e.getKey(), e.getValue());
+        }
 
         System.out.println("\nLAST 10 наименее используемых слов:");
-        sortedByFrequency.entrySet().stream()
-                .skip(Math.max(0, sortedByFrequency.size() - 10))
-                .forEach(entry ->
-                        System.out.printf("%s - %d раз(а)%n", entry.getKey(), entry.getValue())
-                );
+        for (Map.Entry<String, Integer> e : lastResult) {
+            System.out.printf("%s - %d раз(а)%n", e.getKey(), e.getValue());
+        }
+
     }
 
 }
