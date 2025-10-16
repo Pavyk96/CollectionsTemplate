@@ -1,5 +1,8 @@
 package ru.naumen.collection.task1;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Дано:
  * <pre>
@@ -24,6 +27,15 @@ package ru.naumen.collection.task1;
  */
 public class Task1
 {
+    /**
+    Использую интерфейс Map<>, реализацию HashMap<>, алгоритм работает за O(1)
+     Алгоритм поиска по ключу в среднем работает за O(1), так как для доступа к элементу
+     вычисляется хеш-код ключа (в нашем случае используется стандартная реализация hashCode()
+     из класса-обертки Long), по которому определяется индекс (бакет) в хеш-таблице.
+     В нашем случае, мы делаем одно только действие - поиск по ключу, следовательно метод работает за O(1)
+     */
+    private final Map<Long, Goods> internet = new HashMap<>();
+
     public enum Goods {
         /**
          * нет товаров
@@ -47,7 +59,7 @@ public class Task1
      * <p>Достаточно их определить только для id, т.к. он уникален</p>
      */
     public Goods getGoods(Ticket ticket) {
-        // TODO реализовать
-        return null;
+        return internet.get(ticket.getId());
     }
+
 }
