@@ -47,18 +47,10 @@ public class WarAndPeace
                 });
 
         for (Map.Entry<String, Integer> entry : wordCount.entrySet()) {
-            // обновляем топ-10
-            topTenWords.offer(entry);
-            if (topTenWords.size() > 10) {
-                topTenWords.poll();
-            }
-
-            // обновляем ласт-10
-            lastTenWords.offer(entry);
-            if (lastTenWords.size() > 10) {
-                lastTenWords.poll();
-            }
+            updateQueue(topTenWords, entry, 10, true);
+            updateQueue(lastTenWords, entry, 10, false);
         }
+
 
         // переносим из очередей в LinkedList в обратном порядке (чтобы вывести по убыванию/возрастанию)
         LinkedList<Map.Entry<String, Integer>> topResult = new LinkedList<>();
@@ -82,5 +74,29 @@ public class WarAndPeace
         }
 
     }
+
+    private static void updateQueue(PriorityQueue<Map.Entry<String, Integer>> queue,
+                                    Map.Entry<String, Integer> candidate,
+                                    int limit,
+                                    boolean isTopQueue) {
+
+        if (queue.size() < limit) {
+            queue.offer(candidate);
+            return;
+        }
+
+        Map.Entry<String, Integer> peek = queue.peek();
+        if (peek == null) return;
+
+        boolean shouldReplace = isTopQueue
+                ? candidate.getValue() > peek.getValue()
+                : candidate.getValue() < peek.getValue();
+
+        if (shouldReplace) {
+            queue.poll();
+            queue.offer(candidate);
+        }
+    }
+
 
 }
