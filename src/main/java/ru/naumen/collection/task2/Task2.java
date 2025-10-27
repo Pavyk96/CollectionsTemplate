@@ -43,7 +43,7 @@ public class Task2
          * из полей пользователяЫ
          */
         Set<User> setA = new HashSet<>(collA);
-        List<User> duplicates = new ArrayList<>();
+        List<User> duplicates = new ArrayList<>(collA.size());
 
         for (User user : collB) {
             if (setA.contains(user)) {
