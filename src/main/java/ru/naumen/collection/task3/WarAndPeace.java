@@ -47,8 +47,8 @@ public class WarAndPeace
                 });
 
         for (Map.Entry<String, Integer> entry : wordCount.entrySet()) {
-            updateQueue(topTenWords, entry, 10, true);
-            updateQueue(lastTenWords, entry, 10, false);
+            updateQueue(topTenWords, entry, 10);
+            updateQueue(lastTenWords, entry, 10);
         }
 
 
@@ -75,28 +75,25 @@ public class WarAndPeace
 
     }
 
+    /**
+     * Вытесняет текущий граничный элемент, если кандидат "лучше" по компаратору.
+     */
     private static void updateQueue(PriorityQueue<Map.Entry<String, Integer>> queue,
                                     Map.Entry<String, Integer> candidate,
-                                    int limit,
-                                    boolean isTopQueue) {
-
+                                    int limit) {
         if (queue.size() < limit) {
             queue.offer(candidate);
             return;
         }
-
         Map.Entry<String, Integer> peek = queue.peek();
         if (peek == null) return;
 
-        boolean shouldReplace = isTopQueue
-                ? candidate.getValue() > peek.getValue()
-                : candidate.getValue() < peek.getValue();
+        Comparator<? super Map.Entry<String, Integer>> cmp = queue.comparator();
+        if (cmp == null) throw new IllegalStateException("PriorityQueue requires an explicit comparator");
 
-        if (shouldReplace) {
+        if (cmp.compare(candidate, peek) > 0) {
             queue.poll();
             queue.offer(candidate);
         }
     }
-
-
 }
